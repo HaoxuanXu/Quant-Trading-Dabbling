@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class GoldenCross(bt.Strategy):
-    params = (('fast', 50), ('slow', 200), ('order_percentage', 0.95), ('ticker', 'SPY'), ('oneplot', True))
+    params = {'fast': 50, 'slow': 200}
 
     def __init__(self):
 
@@ -29,24 +29,19 @@ class GoldenCross(bt.Strategy):
                 self.inds[d]['slow_MA']
             )
 
-            if i > 0 and self.params.oneplot == True:
-                d.plotinfo.plotmaster = self.datas[0]
 
     def next(self):
         for i, d in enumerate(self.datas):
-            dt, dn = self.datetime.date(), d._name
             pos = self.getposition(d).size
             if pos == 0:
                 if self.inds[d]['crossover'][0] == 1:
-                    amount_to_buy = math.floor(self.params.order_percentage*self.broker.cash / d.close)
-                    self.buy(data=d, size=amount_to_buy)
+                    self.size = math.floor(self.params.order_percentage*self.broker.cash / d.close)
+                    print("Buying {} shares of {} for ${} per share".format(self.size, self.params.ticker, d.close))
+                    self.buy(data=d, size=self.size)
 
-            # else:
-            #     if self.inds[d]['crossover'][0] == 1:
-            #         self.close(data=d)
-            #         self.buy(data=d, size=1000)
 
             elif self.inds[d]['crossover'][0] == -1:
+                print("Selling {} shares of {} for ${} per share".format(self.size, self.params.ticker, d.close))
                 self.close(data=d)
 
 
@@ -58,3 +53,4 @@ class GoldenCross(bt.Strategy):
     #                                                             trade.data._name,
     #                                                             round(trade.pnl, 2),
     #                                                             round(trade.pnlcomm, 2)))
+

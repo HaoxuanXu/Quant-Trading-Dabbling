@@ -17,6 +17,7 @@ strategies_dict = {
 
 parser = optparse.OptionParser()
 parser.add_option("-s", "--strategy", dest="strategy", help="Which Strategy do you want to run")
+parser.add_option("-p", "--percent", dest="percent", help="What percent of money are you investing")
 parser.add_option("-d", "--data", dest="data", help="what stocks are you evaluating this strategy on")
 (options, args) = parser.parse_args()
 
@@ -30,27 +31,32 @@ else:
         raise ValueError("Strategy must part part of {}".format(strategies_dict.keys()))
 
 if options.data is not None:
-    data_list = options.data.strip().split()
+    data_list = options.data.strip()
 else:
-    data_list = input("Stocks to evaluate >").strip().split(' ')
+    data_list = input("Stocks to evaluate >").strip()
     if data_list == "":
         raise ValueError("You must input tickers")
-    elif not all(item in [n.split('.')[0] for n in os.listdir("Data")] for item in data_list):
+    elif not (data_list in [n.split('.')[0] for n in os.listdir("Data")]):
         raise ValueError("Tickers must part part of {}".format([n.split('.')[0] for n in os.listdir("Data")]))
-    elif data_list == "all":
-        data_list = []
-        for data in os.listdir("Data"):
-            data_list.append((data, data.split('.')[0]))
 
-data_list = ["".join((n, ".csv")) for n in data_list]
+if options.percent is not None:
+    percent = float(options.percent)
+else:
+    percent = float(input("Percent of money you are investing >"))
+
+
+strategies_dict[strategy_key].params.ticker = data_list
+strategies_dict[strategy_key].params.order_percentage = percent
+
+
 cerebro = Cerebro()
 cerebro.broker.set_cash(100000)
 
-for i in range(len(data_list)):
-    data = pd.read_csv("Data/{}".format(data_list[i]), index_col="date", parse_dates=True)
-    feed = bt.feeds.PandasData(dataname=data, name=data_list[i][1])
-    cerebro.adddata(feed)
 
-cerebro.addstrategy(strategies_dict[strategy_key], oneplot=False)
+data = pd.read_csv("Data/{}.csv".format(data_list), index_col="date", parse_dates=True)
+feed = bt.feeds.PandasData(dataname=data, name=data_list)
+cerebro.adddata(feed)
+
+cerebro.addstrategy(strategies_dict[strategy_key])
 cerebro.run()
 cerebro.plot()
