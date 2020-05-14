@@ -38,16 +38,17 @@ class GoldenCross(bt.Strategy):
             pos = self.getposition(d).size
             if pos == 0:
                 if self.inds[d]['crossover'][0] == 1:
-                    self.buy(data=d, size=1000)
+                    amount_to_buy = math.floor(self.params.order_percentage*self.broker.cash / d.close)
+                    self.buy(data=d, size=amount_to_buy)
 
-            else:
-                if self.inds[d]['crossover'][0] == 1:
-                    self.close(data=d)
-                    self.buy(data=d, size=1000)
+            # else:
+            #     if self.inds[d]['crossover'][0] == 1:
+            #         self.close(data=d)
+            #         self.buy(data=d, size=1000)
 
-                elif self.inds[d]['crossover'][0] == -1:
-                    self.close(data=d)
-                    self.sell(data=d, size=1000)
+            elif self.inds[d]['crossover'][0] == -1:
+                self.close(data=d)
+
 
     # def notify_trade(self, trade):
     #     dt = self.data.datetime.date()
